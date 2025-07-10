@@ -1,0 +1,95 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
+#define MAX_WORD_LEN 100
+
+// List of keywords
+const char* keywords[] = {
+    "int", "float", "char", "if", "else", "for", "while", "return", "void", "main"
+};
+int numKeywords = sizeof(keywords) / sizeof(keywords[0]);
+
+// Function to check if a word is a keyword
+int isKeyword(const char* word) {
+    for (int i = 0; i < numKeywords; i++) {
+        if (strcmp(word, keywords[i]) == 0)
+            return 1;
+    }
+    return 0;
+}
+
+// Function to check if a character is an operator
+int isOperator(char ch) {
+    char operators[] = "+-*/=<>!&|%";
+    for (int i = 0; i < strlen(operators); i++) {
+        if (ch == operators[i])
+            return 1;
+    }
+    return 0;
+}
+
+// Main lexical analyzer function
+void lexicalAnalyze(FILE* file) {
+    char ch, word[MAX_WORD_LEN];
+    int i = 0;
+
+    while ((ch = fgetc(file)) != EOF) {
+        // Skip whitespace
+        if (isspace(ch)) {
+            continue;
+        }
+
+        // Identifiers or keywords
+        if (isalpha(ch) || ch == '_') {
+            word[i++] = ch;
+            while (isalnum(ch = fgetc(file)) || ch == '_') {
+                word[i++] = ch;
+            }
+            word[i] = '\0';
+            i = 0;
+            ungetc(ch, file); // put back last read character
+
+            if (isKeyword(word)) {
+                printf("Keyword: %s\n", word);
+            } else {
+                printf("Identifier: %s\n", word);
+            }
+        }
+        // Operators
+        else if (isOperator(ch)) {
+            printf("Operator: %c\n", ch);
+        }
+        // Numbers (optional enhancement)
+        else if (isdigit(ch)) {
+            word[i++] = ch;
+            while (isdigit(ch = fgetc(file))) {
+                word[i++] = ch;
+            }
+            word[i] = '\0';
+            i = 0;
+            ungetc(ch, file);
+            printf("Number: %s\n", word);
+        }
+        // Punctuation or other symbols (optional)
+        else {
+            // Skip or print for debugging
+            // printf("Symbol: %c\n", ch);
+        }
+    }
+}
+
+int main() {
+    FILE* file = fopen("input.txt", "r");
+    if (file == NULL) {
+        printf("Error: Could not open input.txt\n");
+        return 1;
+    }
+
+    printf("Lexical Analysis:\n");
+    lexicalAnalyze(file);
+    fclose(file);
+
+    return 0;
+}
